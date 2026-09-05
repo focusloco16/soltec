@@ -1,0 +1,80 @@
+npm notice run frontend-soporte@1.0.0 dev
+npm notice run astro dev
+[2m14:29:37[22m [34m[vite][39m connected.
+[2m14:29:42[22m [34m[types][39m Generated [2m10ms[22m
+[2m14:29:42[22m [34m[vite][39m connected.
+[2m14:29:42[22m [34m[vite][39m Re-optimizing dependencies because vite config has changed
+[42m[1m astro [22m[49m [32mv7.1.6[39m [2mready in[22m 6111 [2mms[22m
+[2m┃[22m Local    [36mhttp://localhost:4321/[39m
+[2m┃[22m Network  [2muse --host to expose[22m
+[2m14:29:43[22m [32mwatching for file changes...[39m
+
+[43m[30m update [39m[49m [33m▶ New version of Astro available: 7.3.1[39m
+  Run [36mnpx @astrojs/upgrade[39m to update
+
+[2m14:30:03[22m [34m[200][39m / [2m107ms[22m
+[2m14:31:03[22m [34m[200][39m / [2m18ms[22m
+[2m14:34:01[22m [34m[200][39m / [2m19ms[22m
+[2m14:34:04[22m [34m[200][39m /login [2m26ms[22m
+[2m14:34:11[22m [34m[200][39m /panel-tecnico [2m20ms[22m
+[2m14:34:14[22m [34m[200][39m /solicitud [2m18ms[22m
+[2m14:35:17[22m [34m[200][39m /panel-tecnico [2m7ms[22m
+[2m14:35:20[22m [34m[200][39m /solicitud [2m10ms[22m
+[31m[1m14:35:21[22m [ERROR] [vite][39m [31m[Unhandled rejection] [1mTypeError[22m: Cannot read properties of undefined (reading 'M_ID')
+[39m > Y chrome-extension:/eppiocemhmnlbhjplcgkofciiegomcon/executors/200.js:1:761
+ > E chrome-extension:/eppiocemhmnlbhjplcgkofciiegomcon/executors/200.js:1:1442
+
+[31m[1m14:35:21[22m [ERROR] [vite][39m [31m[Unhandled rejection] [1mTypeError[22m: Cannot read properties of undefined (reading 'M_ID')
+[39m > Y chrome-extension:/eppiocemhmnlbhjplcgkofciiegomcon/executors/200.js:1:761
+ > E chrome-extension:/eppiocemhmnlbhjplcgkofciiegomcon/executors/200.js:1:1442
+
+[2m14:35:28[22m [34m[200][39m /login [2m7ms[22m
+[2m14:35:33[22m [34m[200][39m /mis-solicitudes [2m18ms[22m
+[2m14:35:35[22m [34m[200][39m /solicitud [2m7ms[22m
+[2m14:43:44[22m [34m[watch][39m src/pages/solicitud.astro
+[2m14:43:45[22m [34m[200][39m /solicitud [2m60ms[22m
+[2m14:45:07[22m [34m[200][39m / [2m18ms[22m
+[2m14:45:33[22m [34m[200][39m / [2m8ms[22m
+[2m14:46:57[22m [34m[watch][39m src/pages/solicitud.astro
+[2m14:46:58[22m [34m[200][39m /solicitud [2m35ms[22m
+[2m14:47:51[22m [34m[watch][39m src/pages/solicitud.astro
+[2m14:47:52[22m [34m[200][39m /solicitud [2m26ms[22m
+[2m14:49:39[22m [34m[200][39m /solicitud [2m4ms[22m
+[2m14:49:48[22m [34m[200][39m /perfil [2m20ms[22m
+[2m14:49:59[22m [34m[200][39m /mis-solicitudes [2m5ms[22m
+[2m14:50:00[22m [34m[200][39m /nueva-solicitud [2m17ms[22m
+[2m14:52:37[22m [34m[200][39m /mis-solicitudes [2m7ms[22m
+[2m14:52:45[22m [34m[200][39m /login [2m6ms[22m
+[2m14:52:50[22m [34m[200][39m /panel-tecnico [2m5ms[22m
+[2m14:52:53[22m [34m[200][39m /solicitud [2m5ms[22m
+[2m14:53:01[22m [34m[200][39m /perfil [2m8ms[22m
+[2m14:53:02[22m [34m[200][39m /panel-tecnico [2m12ms[22m
+[2m14:53:06[22m [34m[200][39m /solicitud [2m8ms[22m
+[2m14:53:12[22m [34m[200][39m /panel-tecnico [2m4ms[22m
+[2m15:13:17[22m [34m[watch][39m src/pages/solicitud.astro
+[2m15:13:17[22m [34m[200][39m /panel-tecnico [2m29ms[22m
+[2m15:13:19[22m [34m[watch][39m src/pages/solicitud.astro
+[2m15:13:19[22m [34m[200][39m /panel-tecnico [2m23ms[22m
+[2m15:20:39[22m [34m[200][39m / [2m5ms[22m
+[2m15:22:09[22m [34m[200][39m /panel-tecnico [2m7ms[22m
+[2m15:22:12[22m [34m[200][39m /login [2m9ms[22m
+[2m15:22:14[22m [34m[200][39m /panel-tecnico [2m7ms[22m
+[2m15:22:18[22m [34m[200][39m /solicitud [2m13ms[22m
+[2m15:22:26[22m [34m[200][39m /solicitud [2m4ms[22m
+[2m15:22:35[22m [34m[200][39m /login [2m5ms[22m
+[2m15:22:40[22m [34m[200][39m /mis-solicitudes [2m5ms[22m
+[2m15:22:42[22m [34m[200][39m /solicitud [2m7ms[22m
+[2m22:33:05[22m [34m[200][39m /login [2m30ms[22m
+[2m22:33:07[22m [34m[200][39m /registro [2m65ms[22m
+[2m22:33:34[22m [34m[200][39m /mis-solicitudes [2m10ms[22m
+[2m22:33:39[22m [34m[200][39m /login [2m21ms[22m
+[2m22:34:21[22m [34m[200][39m /registro [2m3ms[22m
+[2m22:34:40[22m [34m[200][39m /mis-solicitudes [2m14ms[22m
+[2m22:34:43[22m [34m[200][39m /nueva-solicitud [2m43ms[22m
+[2m22:35:13[22m [34m[200][39m /mis-solicitudes [2m18ms[22m
+[2m22:35:16[22m [34m[200][39m /solicitud [2m12ms[22m
+[2m22:35:27[22m [34m[200][39m /mis-solicitudes [2m35ms[22m
+[2m22:35:31[22m [34m[200][39m /login [2m18ms[22m
+[2m22:35:36[22m [34m[200][39m /panel-tecnico [2m15ms[22m
+[2m22:35:38[22m [34m[200][39m /solicitud [2m8ms[22m
+[2m22:39:50[22m [34m[200][39m /panel-tecnico [2m25ms[22m

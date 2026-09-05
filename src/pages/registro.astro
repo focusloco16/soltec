@@ -1,0 +1,85 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout titulo="Registro">
+  <main class="centro">
+    <div class="tarjeta tarjeta-login">
+      <h1>Crear cuenta</h1>
+      <div id="mensaje" class="mensaje" style="display:none"></div>
+      <form id="form-registro">
+        <div class="campo">
+          <label for="nombres">Nombres</label>
+          <input type="text" id="nombres" name="nombres" required />
+        </div>
+        <div class="campo">
+          <label for="apellidos">Apellidos</label>
+          <input type="text" id="apellidos" name="apellidos" required />
+        </div>
+        <div class="campo">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required />
+        </div>
+        <div class="campo">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" name="password" required minlength="6" />
+        </div>
+        <button class="boton" type="submit" style="width:100%">Registrarse</button>
+      </form>
+      <p style="margin-top:1rem; text-align:center">
+        ¿Ya tienes cuenta? <a class="enlace-suave" href="/login">Inicia sesión</a>
+      </p>
+    </div>
+  </main>
+
+  <script>
+    import { API, guardarSesion } from "../scripts/api.js";
+
+    const form = document.getElementById("form-registro") as HTMLFormElement;
+    const mensaje = document.getElementById("mensaje") as HTMLDivElement;
+
+    function mostrarMensaje(texto: string, tipo: string) {
+      mensaje.textContent = texto;
+      mensaje.className = `mensaje ${tipo}`;
+      mensaje.style.display = "block";
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const datos = new FormData(form);
+      try {
+        const respuesta = await fetch(`${API}/api/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nombres: datos.get("nombres"),
+            apellidos: datos.get("apellidos"),
+            email: datos.get("email"),
+            password: datos.get("password"),
+          }),
+        });
+        const json = await respuesta.json();
+        if (!json.success) {
+          mostrarMensaje(json.message || "Error al registrarse", "mensaje-error");
+          return;
+        }
+        // Inicia sesión automáticamente tras el registro
+        const loginResp = await fetch(`${API}/api/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: datos.get("email"),
+            password: datos.get("password"),
+          }),
+        });
+        const loginJson = await loginResp.json();
+        if (loginJson.success) {
+          guardarSesion(loginJson.token, loginJson.user);
+        }
+        window.location.href = "/mis-solicitudes";
+      } catch {
+        mostrarMensaje("No se pudo conectar con el servidor", "mensaje-error");
+      }
+    });
+  </script>
+</Layout>

@@ -1,0 +1,164 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout titulo="Mi perfil">
+  <main class="contenedor">
+    <div class="tarjeta" style="max-width:640px; margin:0 auto">
+      <h1>Mi perfil</h1>
+      <div id="mensaje" class="mensaje" style="display:none"></div>
+
+      <div class="perfil-cabecera">
+        <img id="avatar" class="avatar-grande" src="/lista.svg" alt="Foto de perfil" />
+        <div class="perfil-acciones" style="flex-direction:column; align-items:flex-start">
+          <strong id="nombre-completo">Cargando...</strong>
+          <span class="texto-suave" id="correo-mostrar"></span>
+          <div class="perfil-acciones" style="margin-top:.5rem">
+            <label class="boton" style="cursor:pointer">
+              Subir foto
+              <input type="file" id="input-foto" accept="image/jpeg,image/png,image/webp" style="display:none" />
+            </label>
+            <button class="boton boton-peligro" id="btn-quitar-foto" type="button">Quitar foto</button>
+          </div>
+        </div>
+      </div>
+
+      <form id="form-perfil">
+        <div class="campo">
+          <label for="nombres">Nombres</label>
+          <input type="text" id="nombres" name="nombres" required />
+        </div>
+        <div class="campo">
+          <label for="apellidos">Apellidos</label>
+          <input type="text" id="apellidos" name="apellidos" required />
+        </div>
+        <div class="campo">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" required />
+        </div>
+        <button class="boton" type="submit">Guardar cambios</button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    import { obtenerUsuario, peticion, guardarSesion } from "../scripts/api.js";
+    import { API } from "../scripts/api.js";
+
+    const usuario = obtenerUsuario();
+    if (!usuario) {
+      window.location.href = "/login";
+    }
+
+    const mensaje = document.getElementById("mensaje") as HTMLDivElement;
+    const avatar = document.getElementById("avatar") as HTMLImageElement;
+    const form = document.getElementById("form-perfil") as HTMLFormElement;
+    const inputFoto = document.getElementById("input-foto") as HTMLInputElement;
+    const btnQuitarFoto = document.getElementById("btn-quitar-foto") as HTMLButtonElement;
+    const nombreCompleto = document.getElementById("nombre-completo")!;
+    const correoMostrar = document.getElementById("correo-mostrar")!;
+
+    function mostrarMensaje(texto: string, tipo: string) {
+      mensaje.textContent = texto;
+      mensaje.className = `mensaje ${tipo}`;
+      mensaje.style.display = "block";
+      setTimeout(() => (mensaje.style.display = "none"), 4000);
+    }
+
+    function pintar(user: any) {
+      (document.getElementById("nombres") as HTMLInputElement).value = user.nombres;
+      (document.getElementById("apellidos") as HTMLInputElement).value = user.apellidos;
+      (document.getElementById("email") as HTMLInputElement).value = user.email;
+      nombreCompleto.textContent = `${user.nombres} ${user.apellidos}`;
+      correoMostrar.textContent = user.email;
+      avatar.src = user.foto && user.foto.ruta
+        ? API + user.foto.ruta
+        : "/lista.svg";
+      btnQuitarFoto.style.display = user.foto && user.foto.ruta ? "inline-block" : "none";
+      // Actualizar la sesión local para que la navbar refleje los nuevos datos
+      guardarSesion(obtenerToken(), user);
+    }
+
+    function obtenerToken() {
+      return localStorage.getItem("token");
+    }
+
+    async function cargar() {
+      try {
+        const respuesta = await peticion("/api/profile");
+        const json = await respuesta.json();
+        if (json.success) pintar(json.user);
+        else mostrarMensaje(json.message || "Error al cargar el perfil", "mensaje-error");
+      } catch {
+        mostrarMensaje("No se pudo conectar con el servidor", "mensaje-error");
+      }
+    }
+
+    // Guardar datos (nombres, apellidos, email)
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const headers = { "Content-Type": "application/json" };
+      const token = obtenerToken();
+      if (token) headers["Authorization"] = "Bearer " + token;
+      try {
+        const respuesta = await fetch(`${API}/api/profile`, {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({
+            nombres: (document.getElementById("nombres") as HTMLInputElement).value,
+            apellidos: (document.getElementById("apellidos") as HTMLInputElement).value,
+            email: (document.getElementById("email") as HTMLInputElement).value,
+          }),
+        });
+        const json = await respuesta.json();
+        if (!json.success) {
+          mostrarMensaje(json.message, "mensaje-error");
+          return;
+        }
+        pintar(json.user);
+        mostrarMensaje("Perfil actualizado correctamente", "mensaje-ok");
+      } catch {
+        mostrarMensaje("No se pudo conectar con el servidor", "mensaje-error");
+      }
+    });
+
+    // Subir / reemplazar foto
+    inputFoto.addEventListener("change", async () => {
+      const archivo = inputFoto.files?.[0];
+      if (!archivo) return;
+      const datos = new FormData();
+      datos.append("foto", archivo);
+      try {
+        const respuesta = await peticion("/api/profile/photo", { method: "POST", body: datos });
+        const json = await respuesta.json();
+        if (!json.success) {
+          mostrarMensaje(json.message, "mensaje-error");
+          return;
+        }
+        pintar(json.user);
+        mostrarMensaje("Foto de perfil actualizada", "mensaje-ok");
+        inputFoto.value = "";
+      } catch {
+        mostrarMensaje("No se pudo conectar con el servidor", "mensaje-error");
+      }
+    });
+
+    // Quitar foto
+    btnQuitarFoto.addEventListener("click", async () => {
+      try {
+        const respuesta = await peticion("/api/profile/photo", { method: "DELETE" });
+        const json = await respuesta.json();
+        if (!json.success) {
+          mostrarMensaje(json.message, "mensaje-error");
+          return;
+        }
+        pintar(json.user);
+        mostrarMensaje("Foto de perfil eliminada", "mensaje-ok");
+      } catch {
+        mostrarMensaje("No se pudo conectar con el servidor", "mensaje-error");
+      }
+    });
+
+    cargar();
+  </script>
+</Layout>

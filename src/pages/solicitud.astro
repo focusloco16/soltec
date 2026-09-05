@@ -1,0 +1,181 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout titulo="Detalle de solicitud">
+  <main class="contenedor">
+    <div class="tarjeta" style="max-width:720px; margin:0 auto">
+      <a class="enlace-suave" href="/mis-solicitudes">← Volver</a>
+      <h1 id="titulo">Solicitud</h1>
+      <div id="mensaje" class="mensaje" style="display:none"></div>
+
+      <!-- Información general -->
+      <div id="info">
+        <p class="vacio">Cargando...</p>
+      </div>
+
+      <!-- Archivos adjuntos -->
+      <h2>Archivos adjuntos</h2>
+      <ul id="archivos"></ul>
+
+      <!-- Panel exclusivo del técnico -->
+      <div id="panel-tecnico" style="display:none">
+        <h2>Gestión (técnico)</h2>
+        <form id="form-estado">
+          <div class="campo">
+            <label for="estado">Estado</label>
+            <select id="estado" name="estado">
+              <option value="Pendiente">Pendiente</option>
+              <option value="En proceso">En proceso</option>
+              <option value="En espera">En espera</option>
+              <option value="Solucionada">Solucionada</option>
+              <option value="Cerrada">Cerrada</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>
+              <input type="checkbox" id="asignarme" name="asignarme" />
+              Asignarme esta solicitud
+            </label>
+          </div>
+          <button class="boton" type="submit">Actualizar solicitud</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    import { obtenerUsuario, peticion } from "../scripts/api.js";
+
+    const usuario = obtenerUsuario();
+    if (!usuario) window.location.href = "/login";
+
+    const id = new URLSearchParams(window.location.search).get("id");
+    const info = document.getElementById("info")!;
+    const listaArchivos = document.getElementById("archivos")!;
+    const panelTecnico = document.getElementById("panel-tecnico")!;
+    const mensaje = document.getElementById("mensaje") as HTMLDivElement;
+
+    function badgeClase(valor: string) {
+      return valor.replace(" ", "-");
+    }
+
+    function mostrarMensaje(texto: string, tipo: string) {
+      mensaje.textContent = texto;
+      mensaje.className = `mensaje ${tipo}`;
+      mensaje.style.display = "block";
+    }
+
+    function pintar(s: any) {
+      document.getElementById("titulo")!.textContent = `Solicitud #${s.id}: ${s.asunto}`;
+      info.innerHTML = `
+        <p><strong>Usuario:</strong> ${s.nombre_usuario} ${s.apellido_usuario}</p>
+        <p><strong>Prioridad:</strong> <span class="etiqueta etiqueta-${badgeClase(s.prioridad)}">${s.prioridad}</span></p>
+        <p><strong>Estado:</strong> <span class="etiqueta etiqueta-${badgeClase(s.estado)}">${s.estado}</span></p>
+        <p><strong>Técnico asignado:</strong> ${s.nombre_tecnico || "Sin asignar"}</p>
+        <p><strong>Fecha de creación:</strong> ${new Date(s.fecha_creacion).toLocaleString("es-CO")}</p>
+        <p><strong>Descripción:</strong></p>
+        <p>${s.descripcion}</p>
+      `;
+      // Archivos
+      if (s.archivos && s.archivos.length > 0) {
+        listaArchivos.innerHTML = s.archivos.map((a: any) => `
+          <li>
+            📎 ${a.nombre_archivo}
+            <a class="enlace-suave" href="#" data-id="${a.id}">Descargar</a>
+            ${a.tipo_archivo && a.tipo_archivo.startsWith("image/")
+              ? `<br /><img data-preview="${a.id}" alt="${a.nombre_archivo}" style="display:none; max-width:100%; margin-top:.5rem; border-radius:8px; border:1px solid #e2e8f0" />`
+              : ""}
+          </li>
+        `).join("");
+        // Vista previa de imágenes (cargadas con token desde el backend)
+        listaArchivos.querySelectorAll("img[data-preview]").forEach((img) => {
+          const archivoId = img.getAttribute("data-preview");
+          peticion(`/api/solicitudes/${id}/archivos/${archivoId}/download`)
+            .then((res) => (res.ok ? res.blob() : null))
+            .then((blob) => {
+              if (blob) {
+                img.src = URL.createObjectURL(blob);
+                img.style.display = "block";
+              }
+            })
+            .catch(() => {});
+        });
+        // Descarga protegida por token (la ruta requiere Authorization)
+        listaArchivos.querySelectorAll("a[data-id]").forEach((enlace) => {
+          enlace.addEventListener("click", async (e) => {
+            e.preventDefault();
+            const archivoId = enlace.getAttribute("data-id");
+            const archivo = s.archivos.find((x: any) => String(x.id) === archivoId);
+            const respuesta = await peticion(`/api/solicitudes/${id}/archivos/${archivoId}/download`);
+            if (!respuesta.ok) {
+              mostrarMensaje("No se pudo descargar el archivo", "mensaje-error");
+              return;
+            }
+            const blob = await respuesta.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = archivo ? archivo.nombre_archivo : "descarga";
+            a.click();
+            URL.revokeObjectURL(url);
+          });
+        });
+      } else {
+        listaArchivos.innerHTML = `<li class="vacio">Sin archivos adjuntos</li>`;
+      }
+      // Panel del técnico
+      if (usuario && usuario.rol === "Tecnico") {
+        panelTecnico.style.display = "block";
+        (document.getElementById("estado") as HTMLSelectElement).value = s.estado;
+        (document.getElementById("asignarme") as HTMLInputElement).checked = !!s.tecnico_id;
+      }
+    }
+
+    async function cargar() {
+      try {
+        const respuesta = await peticion(`/api/solicitudes/${id}`);
+        const json = await respuesta.json();
+        if (!json.success) {
+          info.innerHTML = `<p class="vacio">${json.message}</p>`;
+          return;
+        }
+        pintar(json.data);
+      } catch {
+        info.innerHTML = `<p class="vacio">Error al conectar con el servidor</p>`;
+      }
+    }
+
+    const formEstado = document.getElementById("form-estado") as HTMLFormElement;
+    formEstado.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const estadoSelect = document.getElementById("estado") as HTMLSelectElement;
+      const asignarme = (document.getElementById("asignarme") as HTMLInputElement).checked;
+      try {
+        // Actualizar estado (PATCH)
+        const respEstado = await peticion(`/api/solicitudes/${id}/estado`, {
+          method: "PATCH",
+          body: JSON.stringify({ estado: estadoSelect.value }),
+        });
+        const jsonEstado = await respEstado.json();
+        mostrarMensaje(jsonEstado.message, jsonEstado.success ? "mensaje-ok" : "mensaje-error");
+        if (!jsonEstado.success) return;
+        // Asignar al técnico si se marcó el check (PATCH)
+        if (asignarme) {
+          const respAsig = await peticion(`/api/solicitudes/${id}/asignar`, {
+            method: "PATCH",
+            body: JSON.stringify({ tecnico_id: usuario!.id }),
+          });
+          const jsonAsig = await respAsig.json();
+          if (jsonAsig.success) mostrarMensaje(jsonAsig.message, "mensaje-ok");
+          else mostrarMensaje(jsonAsig.message, "mensaje-error");
+        }
+        cargar();
+      } catch {
+        mostrarMensaje("No se pudo conectar con el servidor", "mensaje-error");
+      }
+    });
+
+    cargar();
+  </script>
+</Layout>

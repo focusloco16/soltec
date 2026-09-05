@@ -1,0 +1,1 @@
+import{i as e}from"./api.BoK1TlaF.js";var t=e();t&&(window.location.href=t.rol===`Tecnico`?`/panel-tecnico`:`/mis-solicitudes`);

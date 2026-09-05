@@ -1,0 +1,167 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout titulo="Panel técnico">
+  <main class="contenedor">
+    <div class="tarjeta">
+      <h1>Panel del técnico</h1>
+      <p class="subtitulo">Administra todas las solicitudes de soporte.</p>
+
+      <!-- Filtros: buscar, estado y prioridad -->
+      <div class="filtros">
+        <input type="text" id="buscar" placeholder="🔍 Buscar por usuario o asunto..." />
+        <select id="filtro-estado">
+          <option value="">Todos los estados</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="En proceso">En proceso</option>
+          <option value="En espera">En espera</option>
+          <option value="Solucionada">Solucionada</option>
+          <option value="Cerrada">Cerrada</option>
+        </select>
+        <select id="filtro-prioridad">
+          <option value="">Todas las prioridades</option>
+          <option value="Baja">Baja</option>
+          <option value="Media">Media</option>
+          <option value="Alta">Alta</option>
+          <option value="Critica">Crítica</option>
+        </select>
+      </div>
+
+      <!-- Tabla dinámica: se puede ordenar haciendo clic en los encabezados -->
+      <div class="tabla-contenedor">
+        <table id="tabla">
+          <thead>
+            <tr>
+              <th class="ordenable" data-columna="id">#</th>
+              <th class="ordenable" data-columna="nombre_usuario">Usuario</th>
+              <th class="ordenable" data-columna="asunto">Asunto</th>
+              <th class="ordenable" data-columna="prioridad">Prioridad</th>
+              <th class="ordenable" data-columna="estado">Estado</th>
+              <th class="ordenable" data-columna="fecha_creacion">Fecha</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="cuerpo-tabla">
+            <tr><td colspan="7" class="vacio">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      <div class="paginacion">
+        <span id="info-pagina"></span>
+        <div class="paginas">
+          <button id="btn-anterior">← Anterior</button>
+          <button id="btn-siguiente">Siguiente →</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    import { obtenerUsuario, peticion } from "../scripts/api.js";
+
+    const usuario = obtenerUsuario();
+    if (!usuario) window.location.href = "/login";
+    if (usuario && usuario.rol !== "Tecnico") window.location.href = "/mis-solicitudes";
+
+    const POR_PAGINA = 5;
+    let paginaActual = 1;
+    let totalPaginas = 1;
+    let columnaOrden = "fecha_creacion";
+    let ascendente = false;
+    let temporizadorBusqueda: number | undefined;
+
+    const cuerpo = document.getElementById("cuerpo-tabla") as HTMLTableSectionElement;
+    const buscarInput = document.getElementById("buscar") as HTMLInputElement;
+    const filtroEstado = document.getElementById("filtro-estado") as HTMLSelectElement;
+    const filtroPrioridad = document.getElementById("filtro-prioridad") as HTMLSelectElement;
+    const infoPagina = document.getElementById("info-pagina")!;
+    const btnAnterior = document.getElementById("btn-anterior") as HTMLButtonElement;
+    const btnSiguiente = document.getElementById("btn-siguiente") as HTMLButtonElement;
+
+    function formatearFecha(fecha: string) {
+      if (!fecha) return "";
+      return new Date(fecha).toLocaleDateString("es-CO");
+    }
+
+    function badgeClase(valor: string) {
+      return valor.replace(" ", "-");
+    }
+
+    function renderizar(datos: any[], total: number) {
+      totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+      if (paginaActual > totalPaginas) { paginaActual = totalPaginas; cargar(); return; }
+
+      if (datos.length === 0) {
+        cuerpo.innerHTML = `<tr><td colspan="7" class="vacio">No hay solicitudes que coincidan</td></tr>`;
+      } else {
+        cuerpo.innerHTML = datos.map((s) => `
+          <tr>
+            <td>${s.id}</td>
+            <td>${s.nombre_usuario} ${s.apellido_usuario}</td>
+            <td>${s.asunto}</td>
+            <td><span class="etiqueta etiqueta-${badgeClase(s.prioridad)}">${s.prioridad}</span></td>
+            <td><span class="etiqueta etiqueta-${badgeClase(s.estado)}">${s.estado}</span></td>
+            <td>${formatearFecha(s.fecha_creacion)}</td>
+            <td><a class="boton" href="/solicitud?id=${s.id}">Ver</a></td>
+          </tr>
+        `).join("");
+      }
+
+      infoPagina.textContent = `Página ${paginaActual} de ${totalPaginas} (${total} solicitudes)`;
+      btnAnterior.disabled = paginaActual <= 1;
+      btnSiguiente.disabled = paginaActual >= totalPaginas;
+    }
+
+    async function cargar() {
+      try {
+        const orden = ascendente ? "ASC" : "DESC";
+        const buscar = encodeURIComponent(buscarInput.value.trim());
+        const params = new URLSearchParams();
+        params.set("page", String(paginaActual));
+        params.set("limit", String(POR_PAGINA));
+        params.set("sort", columnaOrden === "nombre_usuario" ? "usuario" : columnaOrden);
+        params.set("order", orden);
+        if (buscar) params.set("search", buscar);
+        if (filtroEstado.value) params.set("estado", filtroEstado.value);
+        if (filtroPrioridad.value) params.set("prioridad", filtroPrioridad.value);
+
+        const respuesta = await peticion(`/api/solicitudes?${params.toString()}`);
+        const json = await respuesta.json();
+        if (json.success) {
+          renderizar(json.data, json.total);
+        }
+      } catch {
+        cuerpo.innerHTML = `<tr><td colspan="7" class="vacio">Error al conectar con el servidor</td></tr>`;
+      }
+    }
+
+    // Eventos: búsqueda con debounce, filtros y paginación desde el servidor
+    buscarInput.addEventListener("input", () => {
+      clearTimeout(temporizadorBusqueda);
+      temporizadorBusqueda = setTimeout(() => { paginaActual = 1; cargar(); }, 300);
+    });
+    filtroEstado.addEventListener("change", () => { paginaActual = 1; cargar(); });
+    filtroPrioridad.addEventListener("change", () => { paginaActual = 1; cargar(); });
+    btnAnterior.addEventListener("click", () => { if (paginaActual > 1) { paginaActual--; cargar(); } });
+    btnSiguiente.addEventListener("click", () => { if (paginaActual < totalPaginas) { paginaActual++; cargar(); } });
+
+    document.querySelectorAll("th.ordenable").forEach((th) => {
+      th.addEventListener("click", () => {
+        const columna = th.getAttribute("data-columna")!;
+        if (columnaOrden === columna) {
+          ascendente = !ascendente;
+        } else {
+          columnaOrden = columna;
+          ascendente = true;
+        }
+        paginaActual = 1;
+        cargar();
+      });
+    });
+
+    cargar();
+  </script>
+</Layout>

@@ -1,0 +1,23 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout titulo="Inicio">
+  <main class="centro">
+    <div class="tarjeta tarjeta-login" style="text-align:center">
+      <h1>Sistema de Soporte Técnico</h1>
+      <p class="subtitulo">Registra y consulta tus solicitudes de soporte.</p>
+      <a class="boton" href="/login">Iniciar sesión</a>
+      <a class="boton" href="/registro" style="margin-left:.5rem; background:#64748b">Registrarse</a>
+    </div>
+  </main>
+
+  <script>
+    import { obtenerUsuario } from "../scripts/api.js";
+
+    const usuario = obtenerUsuario();
+    if (usuario) {
+      window.location.href = usuario.rol === "Tecnico" ? "/panel-tecnico" : "/mis-solicitudes";
+    }
+  </script>
+</Layout>

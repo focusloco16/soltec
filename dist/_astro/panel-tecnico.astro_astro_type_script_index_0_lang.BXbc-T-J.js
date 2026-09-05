@@ -1,0 +1,11 @@
+import{a as e,i as t}from"./api.BoK1TlaF.js";var n=t();n||(window.location.href=`/login`),n&&n.rol!==`Tecnico`&&(window.location.href=`/mis-solicitudes`);var r=5,i=1,a=1,o=`fecha_creacion`,s=!1,c,l=document.getElementById(`cuerpo-tabla`),u=document.getElementById(`buscar`),d=document.getElementById(`filtro-estado`),f=document.getElementById(`filtro-prioridad`),p=document.getElementById(`info-pagina`),m=document.getElementById(`btn-anterior`),h=document.getElementById(`btn-siguiente`);function g(e){return e?new Date(e).toLocaleDateString(`es-CO`):``}function _(e){return e.replace(` `,`-`)}function v(e,t){if(a=Math.max(1,Math.ceil(t/r)),i>a){i=a,y();return}l.innerHTML=e.length===0?`<tr><td colspan="7" class="vacio">No hay solicitudes que coincidan</td></tr>`:e.map(e=>`
+          <tr>
+            <td>${e.id}</td>
+            <td>${e.nombre_usuario} ${e.apellido_usuario}</td>
+            <td>${e.asunto}</td>
+            <td><span class="etiqueta etiqueta-${_(e.prioridad)}">${e.prioridad}</span></td>
+            <td><span class="etiqueta etiqueta-${_(e.estado)}">${e.estado}</span></td>
+            <td>${g(e.fecha_creacion)}</td>
+            <td><a class="boton" href="/solicitud?id=${e.id}">Ver</a></td>
+          </tr>
+        `).join(``),p.textContent=`Página ${i} de ${a} (${t} solicitudes)`,m.disabled=i<=1,h.disabled=i>=a}async function y(){try{let t=s?`ASC`:`DESC`,n=encodeURIComponent(u.value.trim()),a=new URLSearchParams;a.set(`page`,String(i)),a.set(`limit`,String(r)),a.set(`sort`,o===`nombre_usuario`?`usuario`:o),a.set(`order`,t),n&&a.set(`search`,n),d.value&&a.set(`estado`,d.value),f.value&&a.set(`prioridad`,f.value);let c=await(await e(`/api/solicitudes?${a.toString()}`)).json();c.success&&v(c.data,c.total)}catch{l.innerHTML=`<tr><td colspan="7" class="vacio">Error al conectar con el servidor</td></tr>`}}u.addEventListener(`input`,()=>{clearTimeout(c),c=setTimeout(()=>{i=1,y()},300)}),d.addEventListener(`change`,()=>{i=1,y()}),f.addEventListener(`change`,()=>{i=1,y()}),m.addEventListener(`click`,()=>{i>1&&(i--,y())}),h.addEventListener(`click`,()=>{i<a&&(i++,y())}),document.querySelectorAll(`th.ordenable`).forEach(e=>{e.addEventListener(`click`,()=>{let t=e.getAttribute(`data-columna`);o===t?s=!s:(o=t,s=!0),i=1,y()})}),y();

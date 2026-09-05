@@ -1,0 +1,67 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  titulo: string;
+}
+
+const { titulo } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{titulo} | Soporte Técnico</title>
+  </head>
+  <body>
+    <nav class="navbar">
+      <a class="marca" href="/">🛠 Soporte Técnico</a>
+      <div class="enlaces">
+        <a href="/nueva-solicitud" data-rol="Usuario">Nueva solicitud</a>
+        <a href="/mis-solicitudes" data-rol="Usuario">Mis solicitudes</a>
+        <a href="/panel-tecnico" data-rol="Tecnico">Panel técnico</a>
+        <a href="/perfil" id="enlace-perfil" style="display:none">
+          <img id="avatar-nav" class="avatar" src="/lista.svg" alt="Foto de perfil" />
+          <span class="usuario-nombre" id="nombre-usuario"></span>
+        </a>
+        <button class="boton boton-peligro" id="btn-salir" style="display:none">
+          Salir
+        </button>
+      </div>
+    </nav>
+
+    <slot />
+
+    <script>
+      import { cerrarSesion, obtenerUsuario } from "../scripts/api.js";
+      import { API } from "../scripts/api.js";
+
+      const usuario = obtenerUsuario();
+      if (usuario) {
+        // Muestra los enlaces según el rol
+        document.querySelectorAll("[data-rol]").forEach((enlace) => {
+          if (enlace.getAttribute("data-rol") !== usuario.rol) {
+            enlace.style.display = "none";
+          }
+        });
+        const nombre = document.getElementById("nombre-usuario");
+        if (nombre) nombre.textContent = `${usuario.nombres} ${usuario.apellidos}`;
+        // Avatar (foto de perfil persistente desde el servidor)
+        const avatarNav = document.getElementById("avatar-nav") as HTMLImageElement | null;
+        if (avatarNav) {
+          avatarNav.src = usuario.foto && usuario.foto.ruta ? API + usuario.foto.ruta : "/lista.svg";
+        }
+        const enlacePerfil = document.getElementById("enlace-perfil");
+        if (enlacePerfil) enlacePerfil.style.display = "inline-flex";
+        const btnSalir = document.getElementById("btn-salir");
+        if (btnSalir) {
+          btnSalir.style.display = "inline-block";
+          btnSalir.addEventListener("click", () => cerrarSesion());
+        }
+      }
+    </script>
+  </body>
+</html>

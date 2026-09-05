@@ -1,0 +1,104 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout titulo="Mis solicitudes">
+  <main class="contenedor">
+    <div class="tarjeta">
+      <h1>Mis solicitudes</h1>
+      <div id="mensaje" class="mensaje" style="display:none"></div>
+      <div class="tabla-contenedor">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Asunto</th>
+              <th>Prioridad</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="cuerpo-tabla">
+            <tr><td colspan="6" class="vacio">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="paginacion">
+        <span id="info-pagina"></span>
+        <div class="paginas">
+          <button id="btn-anterior">← Anterior</button>
+          <button id="btn-siguiente">Siguiente →</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    import { obtenerUsuario, peticion } from "../scripts/api.js";
+
+    const usuario = obtenerUsuario();
+    if (!usuario) window.location.href = "/login";
+
+    const cuerpo = document.getElementById("cuerpo-tabla") as HTMLTableSectionElement;
+    const mensaje = document.getElementById("mensaje") as HTMLDivElement;
+    const infoPagina = document.getElementById("info-pagina")!;
+    const btnAnterior = document.getElementById("btn-anterior") as HTMLButtonElement;
+    const btnSiguiente = document.getElementById("btn-siguiente") as HTMLButtonElement;
+
+    const POR_PAGINA = 5;
+    let paginaActual = 1;
+    let totalPaginas = 1;
+
+    function formatearFecha(fecha: string) {
+      if (!fecha) return "";
+      const d = new Date(fecha);
+      return d.toLocaleDateString("es-CO") + " " + d.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function badgeClase(valor: string) {
+      return valor.replace(" ", "-");
+    }
+
+    function renderizar(solicitudes: any[], total: number) {
+      totalPaginas = Math.max(1, Math.ceil(total / POR_PAGINA));
+      if (solicitudes.length === 0) {
+        cuerpo.innerHTML = `<tr><td colspan="6" class="vacio">No tienes solicitudes registradas. <a class="enlace-suave" href="/nueva-solicitud">Crear una</a></td></tr>`;
+      } else {
+        cuerpo.innerHTML = solicitudes.map((s: any) => `
+          <tr>
+            <td>${s.id}</td>
+            <td>${s.asunto}</td>
+            <td><span class="etiqueta etiqueta-${badgeClase(s.prioridad)}">${s.prioridad}</span></td>
+            <td><span class="etiqueta etiqueta-${badgeClase(s.estado)}">${s.estado}</span></td>
+            <td>${formatearFecha(s.fecha_creacion)}</td>
+            <td><a class="boton" href="/solicitud?id=${s.id}">Ver</a></td>
+          </tr>
+        `).join("");
+      }
+      infoPagina.textContent = `Página ${paginaActual} de ${totalPaginas} (${total} solicitudes)`;
+      btnAnterior.disabled = paginaActual <= 1;
+      btnSiguiente.disabled = paginaActual >= totalPaginas;
+    }
+
+    async function cargar() {
+      try {
+        const respuesta = await peticion(`/api/solicitudes?page=${paginaActual}&limit=${POR_PAGINA}&sort=fecha_creacion&order=DESC`);
+        const json = await respuesta.json();
+        if (!json.success) {
+          mensaje.textContent = json.message;
+          mensaje.className = "mensaje mensaje-error";
+          return;
+        }
+        renderizar(json.data, json.total);
+      } catch {
+        cuerpo.innerHTML = `<tr><td colspan="6" class="vacio">Error al conectar con el servidor</td></tr>`;
+      }
+    }
+
+    btnAnterior.addEventListener("click", () => { if (paginaActual > 1) { paginaActual--; cargar(); } });
+    btnSiguiente.addEventListener("click", () => { if (paginaActual < totalPaginas) { paginaActual++; cargar(); } });
+
+    cargar();
+  </script>
+</Layout>
