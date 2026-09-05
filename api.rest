@@ -1,0 +1,125 @@
+GET http://localhost:8007/api/health
+
+###
+POST http://localhost:8007/api/test-email
+
+###
+POST http://localhost:8007/api/register
+Content-Type: application/json
+
+{
+    "nombres": "Juan",
+    "apellidos": "Perez",
+    "email": "juan@example.com",
+    "password": "123456"
+}
+
+###
+POST http://localhost:8007/api/login
+Content-Type: application/json
+
+{
+    "email": "juan@example.com",
+    "password": "123456"
+}
+
+###
+GET http://localhost:8007/api/profile
+Authorization: Bearer pegAquiElToken
+
+###
+PUT http://localhost:8007/api/profile
+Authorization: Bearer pegAquiElToken
+Content-Type: application/json
+
+{
+    "nombres": "Juan Carlos",
+    "apellidos": "Perez Gomez"
+}
+
+###
+POST http://localhost:8007/api/profile/photo
+Authorization: Bearer pegAquiElToken
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="foto"; filename="foto.jpg"
+Content-Type: image/jpeg
+
+< ./uploads/perfiles/ejemplo.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+DELETE http://localhost:8007/api/profile/photo
+Authorization: Bearer pegAquiElToken
+
+###
+GET http://localhost:8007/api/solicitudes?page=1&limit=5
+Authorization: Bearer pegAquiElToken
+
+###
+GET http://localhost:8007/api/solicitudes/1
+Authorization: Bearer pegAquiElToken
+
+###
+POST http://localhost:8007/api/solicitudes
+Authorization: Bearer pegAquiElToken
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="asunto"
+
+PC no prende
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="descripcion"
+
+El equipo no enciende despues de un corte de energia.
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="prioridad"
+
+Alta
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="archivo"; filename="error.txt"
+Content-Type: text/plain
+
+< ./uploads/solicitudes/error.txt
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+POST http://localhost:8007/api/solicitudes
+Authorization: Bearer pegAquiElToken
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="asunto"
+
+Instalar impresora
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="descripcion"
+
+Instalar la impresora de la recepcion.
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="prioridad"
+
+Media
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+PATCH http://localhost:8007/api/solicitudes/1/estado
+Authorization: Bearer pegAquiElToken
+Content-Type: application/json
+
+{
+    "estado": "En proceso"
+}
+
+###
+PATCH http://localhost:8007/api/solicitudes/1/asignar
+Authorization: Bearer pegAquiElToken
+Content-Type: application/json
+
+{}
+
+###
+GET http://localhost:8007/api/solicitudes/1/archivos/1/download
+Authorization: Bearer pegAquiElToken
